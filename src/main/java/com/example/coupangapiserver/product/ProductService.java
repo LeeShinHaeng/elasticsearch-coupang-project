@@ -1,6 +1,8 @@
 package com.example.coupangapiserver.product;
 
 import com.example.coupangapiserver.product.domain.Product;
+import com.example.coupangapiserver.product.domain.ProductDocument;
+import com.example.coupangapiserver.product.domain.ProductDocumentRepository;
 import com.example.coupangapiserver.product.dto.CreateProductRequestDto;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -12,9 +14,12 @@ import java.util.List;
 public class ProductService {
 
 	private final ProductRepository productRepository;
+	private final ProductDocumentRepository productDocumentRepository;
 
-	public ProductService(ProductRepository productRepository) {
+	public ProductService(ProductRepository productRepository,
+						  ProductDocumentRepository productDocumentRepository) {
 		this.productRepository = productRepository;
+		this.productDocumentRepository = productDocumentRepository;
 	}
 
 	public List<Product> getProducts(int page, int size) {
@@ -30,10 +35,23 @@ public class ProductService {
 			createProductRequestDto.getRating(),
 			createProductRequestDto.getCategory()
 		);
-		return productRepository.save(product);
+		Product saved = productRepository.save(product);
+
+		ProductDocument productDocument = new ProductDocument(
+			saved.getId().toString(),
+			saved.getName(),
+			saved.getDescription(),
+			saved.getPrice(),
+			saved.getRating(),
+			saved.getCategory()
+		);
+		productDocumentRepository.save(productDocument);
+
+		return saved;
 	}
 
 	public void deleteProduct(Long id) {
 		productRepository.deleteById(id);
+		productDocumentRepository.deleteById(id.toString());
 	}
 }
